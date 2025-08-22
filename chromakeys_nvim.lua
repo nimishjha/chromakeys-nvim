@@ -903,7 +903,7 @@ function hslToHex(hslValue)
 end
 
 function hexToHsl(hex)
-	assert(type(hex) == "string" and string.len(hex) == 6, "hexToHsl: invalid hex value")
+	assert(type(hex) == "string" and string.len(hex) == 6, string.format("hexToHsl: invalid hex value %s", hex))
 
 	local r = tonumber(hex:sub(1, 2), 16) / 255
 	local g = tonumber(hex:sub(3, 4), 16) / 255
@@ -1248,7 +1248,8 @@ end
 
 function forceBrightness(hslValue, desiredBrightness)
 	local hexColor = hslToHex(hslValue)
-	local multiplier = desiredBrightness / calcBrightnessHex(hexColor)
+	local actualBrightness = calcBrightnessHex(hexColor)
+	local multiplier = actualBrightness > 0 and desiredBrightness / actualBrightness or 0
 	local adjustedHexColor = multiplyHexColor(hexColor, multiplier)
 	return hexToHsl(adjustedHexColor)
 end
@@ -1922,29 +1923,29 @@ end
 
 init()
 
-M.generateColorScheme = generateColorScheme
-M.previousColorFunction = previousColorFunction
-M.nextColorFunction = nextColorFunction
-M.increaseHue = createAdjustmentCommand(ACTIONS.HUE_INCREASE)
-M.decreaseHue = createAdjustmentCommand(ACTIONS.HUE_DECREASE)
-M.increaseHueLarge = createAdjustmentCommand(ACTIONS.HUE_INCREASE_LARGE)
-M.decreaseHueLarge = createAdjustmentCommand(ACTIONS.HUE_DECREASE_LARGE)
-M.increaseSaturation = createAdjustmentCommand(ACTIONS.SATURATION_INCREASE)
-M.decreaseSaturation = createAdjustmentCommand(ACTIONS.SATURATION_DECREASE)
+M.generateColorScheme     = generateColorScheme
+M.previousColorFunction   = previousColorFunction
+M.nextColorFunction       = nextColorFunction
+M.increaseHue             = createAdjustmentCommand(ACTIONS.HUE_INCREASE)
+M.decreaseHue             = createAdjustmentCommand(ACTIONS.HUE_DECREASE)
+M.increaseHueLarge        = createAdjustmentCommand(ACTIONS.HUE_INCREASE_LARGE)
+M.decreaseHueLarge        = createAdjustmentCommand(ACTIONS.HUE_DECREASE_LARGE)
+M.increaseSaturation      = createAdjustmentCommand(ACTIONS.SATURATION_INCREASE)
+M.decreaseSaturation      = createAdjustmentCommand(ACTIONS.SATURATION_DECREASE)
 M.increaseSaturationLarge = createAdjustmentCommand(ACTIONS.SATURATION_INCREASE_LARGE)
 M.decreaseSaturationLarge = createAdjustmentCommand(ACTIONS.SATURATION_DECREASE_LARGE)
-M.increaseLightness = createAdjustmentCommand(ACTIONS.LIGHTNESS_INCREASE)
-M.decreaseLightness = createAdjustmentCommand(ACTIONS.LIGHTNESS_DECREASE)
-M.increaseLightnessLarge = createAdjustmentCommand(ACTIONS.LIGHTNESS_INCREASE_LARGE)
-M.decreaseLightnessLarge = createAdjustmentCommand(ACTIONS.LIGHTNESS_DECREASE_LARGE)
-M.randomizeColor = createAdjustmentCommand(ACTIONS.RANDOMISE)
-M.randomiseHue = createAdjustmentCommand(ACTIONS.RANDOMISE_HUE)
-M.randomiseSaturation = createAdjustmentCommand(ACTIONS.RANDOMISE_SATURATION)
-M.randomiseLightness = createAdjustmentCommand(ACTIONS.RANDOMISE_LIGHTNESS)
-M.previousColorScheme = previousColorScheme
-M.nextColorScheme = nextColorScheme
-M.showHighlightGroups = showHighlightGroups
-M.showInfo = showInfo
-M.saveTheme = saveTheme
+M.increaseLightness       = createAdjustmentCommand(ACTIONS.LIGHTNESS_INCREASE)
+M.decreaseLightness       = createAdjustmentCommand(ACTIONS.LIGHTNESS_DECREASE)
+M.increaseLightnessLarge  = createAdjustmentCommand(ACTIONS.LIGHTNESS_INCREASE_LARGE)
+M.decreaseLightnessLarge  = createAdjustmentCommand(ACTIONS.LIGHTNESS_DECREASE_LARGE)
+M.randomizeColor          = createAdjustmentCommand(ACTIONS.RANDOMISE)
+M.randomiseHue            = createAdjustmentCommand(ACTIONS.RANDOMISE_HUE)
+M.randomiseSaturation     = createAdjustmentCommand(ACTIONS.RANDOMISE_SATURATION)
+M.randomiseLightness      = createAdjustmentCommand(ACTIONS.RANDOMISE_LIGHTNESS)
+M.previousColorScheme     = previousColorScheme
+M.nextColorScheme         = nextColorScheme
+M.showHighlightGroups     = showHighlightGroups
+M.showInfo                = showInfo
+M.saveTheme               = saveTheme
 
 return M
