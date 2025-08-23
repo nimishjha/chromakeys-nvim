@@ -120,12 +120,6 @@ local SPECIAL_SCOPES_ORDER = {
 	"BASE"
 }
 
-local fixedColors = {
-	bgDiffAdd = "",
-	bgDiffChange = "",
-	bgDiffDelete = "",
-	bgDiffText = "",
-}
 
 
 
@@ -243,6 +237,7 @@ hi! link @function.builtin Special
 hi! link @function.macro PreProc
 hi! link @function.method Identifier
 hi! link @keyword Statement
+hi! link @keyword.function Function
 hi! link @keyword.conditional Statement
 hi! link @keyword.debug Special
 hi! link @keyword.directive PreProc
@@ -256,7 +251,7 @@ hi! link @lsp.type.comment Comment
 hi! link @lsp.type.decorator Identifier
 hi! link @lsp.type.enum Type
 hi! link @lsp.type.enumMember Constant
-hi! link @lsp.type.function Identifier
+hi! link @lsp.type.function Function
 hi! link @lsp.type.interface Type
 hi! link @lsp.type.macro PreProc
 hi! link @lsp.type.method Identifier
@@ -318,7 +313,6 @@ hi! link Float Constant
 hi! link FloatBorder Normal
 hi! link FloatFooter Title
 hi! link FloatTitle Title
-hi! link Function Identifier
 hi! link Include PreProc
 hi! link Keyword Statement
 hi! link Label Statement
@@ -352,15 +346,17 @@ hi! link VertSplit Normal
 hi! link Whitespace NonText
 hi! link WinBarNC WinBar
 hi! link WinSeparator Normal
+hi! link Added DiffAdd
+hi! link Changed DiffChange
+hi! link Removed DiffDelete
 hi PreProc         guifg={{fgPreProc}} guibg={{bgPreProc}} gui=NONE cterm=NONE
 hi Special         guifg={{fgSpecial}} guibg={{bgSpecial}} gui=NONE cterm=NONE
 hi Constant        guifg={{fgConstant}} guibg={{bgConstant}} gui=NONE cterm=NONE
 hi Comment         guifg={{fgComment}} guibg={{bgComment}} gui=NONE cterm=NONE
-hi Todo            guifg={{fgTodo}} guibg={{bgTodo}} gui=NONE cterm=NONE
 hi Identifier      guifg={{fgIdentifier}} guibg={{bgIdentifier}} gui=NONE cterm=NONE
 hi Statement       guifg={{fgStatement}} guibg={{bgStatement}} gui=NONE cterm=NONE
 hi Type            guifg={{fgType}} guibg={{bgType}} gui=NONE cterm=NONE
-hi TypeDef         guifg={{fgTypeDef}} guibg={{bgTypeDef}} gui=NONE cterm=NONE
+hi Function        guifg={{fgFunction}} guibg={{bgFunction}} gui=NONE cterm=NONE
 hi Title           guifg={{fgTitle}} guibg={{bgTitle}} gui=NONE cterm=NONE
 hi Underlined      guifg={{fgUnderlined}} guibg={{bgUnderlined}} gui=NONE cterm=NONE
 hi Search          guifg={{fgSearch}} guibg={{bgSearch}} gui=NONE cterm=NONE
@@ -378,6 +374,7 @@ hi Normal          guifg={{fgNormal}} guibg={{bgNormal}} gui=NONE cterm=NONE
 hi LineNr          guifg={{fgLineNr}} guibg={{bgLineNr}} gui=NONE cterm=NONE
 hi CursorLineNr    guifg={{fgCursorLineNr}} guibg={{bgCursorLineNr}} gui=NONE cterm=NONE
 hi StatusLine      guifg={{fgStatusLine}} guibg={{bgStatusLine}} gui=NONE cterm=NONE
+hi StatusLineNC    guifg={{fgStatusLineNC}} guibg={{bgStatusLineNC}} gui=NONE cterm=NONE
 hi Pmenu           guifg={{fgPmenu}} guibg={{bgPmenu}} gui=NONE cterm=NONE
 hi PmenuSel        guifg={{fgPmenuSel}} guibg={{bgPmenuSel}} gui=NONE cterm=NONE
 hi Visual          guifg={{fgVisual}} guibg={{bgVisual}} gui=NONE cterm=NONE
@@ -385,6 +382,14 @@ hi WinBar          guifg={{fgWinBar}} guibg={{bgWinBar}} gui=NONE cterm=NONE
 hi DiffAdd         guifg={{fgDiffAdd}} guibg={{bgDiffAdd}} gui=NONE cterm=NONE
 hi DiffDelete      guifg={{fgDiffDelete}} guibg={{bgDiffDelete}} gui=NONE cterm=NONE
 hi DiffChange      guifg={{fgDiffChange}} guibg={{bgDiffChange}} gui=NONE cterm=NONE
+hi ModeMsg         guifg={{fgModeMsg}} guibg={{bgModeMsg}} gui=NONE cterm=NONE
+hi MoreMsg         guifg={{fgMoreMsg}} guibg={{bgMoreMsg}} gui=NONE cterm=NONE
+hi Question        guifg={{fgMoreMsg}} guibg={{bgMoreMsg}} gui=NONE cterm=NONE
+hi MatchParen      guifg=#cccc00 guibg=#000000 gui=NONE cterm=NONE
+hi WinSeparator    guifg=#000000 guibg=#000000 gui=NONE cterm=NONE
+hi ErrorMsg        guifg=#cc0000 guibg=#500000 gui=NONE cterm=NONE
+hi WarningMsg      guifg=#cc9900 guibg=#502000 gui=NONE cterm=NONE
+hi Todo            guifg=#000000 guibg=#c0c000 gui=NONE cterm=NONE
 ]]
 
 
@@ -612,7 +617,10 @@ function setTemplateVariables()
 		"fgDiffAdd",
 		"fgDiffChange",
 		"fgDiffDelete",
-		"fgEndOfBuffer"
+		"fgEndOfBuffer",
+		"fgModeMsg",
+		"fgMoreMsg",
+		"fgStatusLineNC",
 	})
 
 	settings.bgVars = exclude(bgVars, {
@@ -625,6 +633,9 @@ function setTemplateVariables()
 		"bgDiffChange",
 		"bgDiffDelete",
 		"bgEndOfBuffer",
+		"bgModeMsg",
+		"bgMoreMsg",
+		"bgStatusLineNC",
 	})
 
 	settings.fgVarsThatShouldBeBright = exclude(fgVars, { "fgLineNr", "fgStatusLine" })
@@ -828,6 +839,7 @@ function replaceVariables(template, vars)
 end
 
 function makeHsl(hue, sat, lig)
+	assert(type(hue) == "number" and type(sat) == "number" and type(lig) == "number", string.format("makeHsl: expected 3 numbers, got %s %s %s", type(hue), type(sat), type(lig)))
 	return { h = hue, s = sat, l = lig }
 end
 
@@ -1115,6 +1127,7 @@ function applyColorScheme()
 	else
 		showMessage("Saved " .. themeFilePath .. " successfully")
 		vim.cmd.colorscheme("chromakeys")
+		-- vim.api.nvim_set_option_value("colorscheme", "chromakeys", {})
 		showStatus()
 	end
 end
@@ -1545,7 +1558,7 @@ function applyConstraintsToRules()
 		settings.rulesMap.fgComment = makeHsl(settings.rulesMap.fgComment.h, 65, 75)
 		settings.rulesMap.bgComment = makeHsl(settings.rulesMap.fgComment.h, 65, 15)
 		settings.rulesMap.fgStatusLine = clampSaturation(forceLightness(fg, 45), 0, 35)
-		settings.rulesMap.fgNormal = clampSaturation(forceLightness(fg, 45), 0, 35)
+		-- settings.rulesMap.fgNormal = clampSaturation(forceLightness(fg, 45), 0, 35)
 		settings.rulesMap.bgStatusLine = clampSaturation(forceLightness(fg, 4), 0, 35)
 		settings.rulesMap.bgStatusLine.l = math.min(settings.rulesMap.bgStatusLine.l, bg.l)
 		settings.rulesMap.fgLineNr = makeHsl(fg.h, 30, 35)
@@ -1558,8 +1571,8 @@ function applyConstraintsToRules()
 
 		settings.rulesMap.fgCurSearch = makeHsl(0, 0, 75)
 		settings.rulesMap.bgCurSearch = makeHsl(0, 0, 0)
-		settings.rulesMap.fgSearch = makeHsl(45, 60, 50)
-		settings.rulesMap.bgSearch = makeHsl(45, 60, 30)
+		settings.rulesMap.fgSearch = makeHsl(145, 70, 50)
+		settings.rulesMap.bgSearch = makeHsl(145, 60, 30)
 
 		settings.rulesMap.fgDiffAdd = makeHsl(150, 50, 50)
 		settings.rulesMap.bgDiffAdd = makeHsl(150, 20, 20)
@@ -1586,6 +1599,18 @@ function applyConstraintsToRules()
 		settings.rulesMap.bgPmenu = makeHsl(settings.rulesMap.fgPmenu.h, 0, 0)
 		settings.rulesMap.fgPmenuSel = makeHsl(settings.rulesMap.fgPmenuSel.h, 60, 75)
 		settings.rulesMap.bgPmenuSel = makeHsl(settings.rulesMap.fgPmenuSel.h, 20, 20)
+
+		settings.rulesMap.fgModeMsg = makeHsl(fg.h, 50, 50)
+		settings.rulesMap.bgModeMsg = makeHsl(fg.h, 20, 20)
+
+		settings.rulesMap.fgMoreMsg = makeHsl(fg.h, 50, 50)
+		settings.rulesMap.bgMoreMsg = makeHsl(fg.h, 20, 20)
+
+		settings.rulesMap.fgStatusLineNC = makeHsl(settings.rulesMap.bgStatusLine.h, 50, 50)
+		settings.rulesMap.bgStatusLineNC = makeHsl(settings.rulesMap.bgStatusLine.h, 50, 10)
+
+		settings.rulesMap.fgUnderlined = makeHsl(60, 50, 50)
+		settings.rulesMap.bgUnderlined = makeHsl(0, 0, 0)
 	end
 
 	if settings.shouldForceUniformBrightness then
@@ -1952,21 +1977,25 @@ function listFiles(dir)
 	return vim.fn.readdir(dir)
 end
 
+function printIndented(arrStrings, indentLevel)
+	local indentStr = indentLevel ~= nil and string.rep("\t", indentLevel) or ""
+	for _, str in ipairs(arrStrings) do
+		print(indentStr .. str)
+	end
+end
+
 function showInfo()
 	local runtimePaths = vim.api.nvim_list_runtime_paths()
-	for _, path in ipairs(runtimePaths) do
-		print(path)
-	end
+	print("runtime paths:")
+	printIndented(runtimePaths, 1)
 	local currentFilePath = vim.api.nvim_buf_get_name(0)
-	print("currentFilePath: " .. currentFilePath)
+	print("\ncurrent file path: " .. currentFilePath)
 	local homeDir = vim.fn.expand('~')
 	local colorSchemesDir = homeDir .. "/.config/nvim/colors"
+	print("\ncolor schemes dir: " .. colorSchemesDir)
 
-	print("colorSchemesDir: " .. colorSchemesDir)
 	local files = listFiles(colorSchemesDir)
-	for _, file in ipairs(files) do
-		print("\t" .. file)
-	end
+	printIndented(files, 1)
 end
 
 function setColorSchemesDir()
