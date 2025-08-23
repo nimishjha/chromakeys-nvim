@@ -586,15 +586,54 @@ function exclude(list, excludeList)
 	return filteredList
 end
 
+function concat(list1, list2)
+	local result = {}
+	for _, value in ipairs(list1) do
+		table.insert(result, value)
+	end
+	for _, value in ipairs(list2) do
+		table.insert(result, value)
+	end
+	return result
+end
+
 function setTemplateVariables()
 	local fgVars, bgVars = getTemplateVars()
 
 	table.sort(fgVars)
 	table.sort(bgVars)
 
-	settings.fgVars = fgVars
-	settings.bgVars = bgVars
+	settings.fgVars = exclude(fgVars, {
+		"fgDiagnosticError",
+		"fgDiagnosticHint",
+		"fgDiagnosticInfo",
+		"fgDiagnosticOk",
+		"fgDiagnosticWarn",
+		"fgDiffAdd",
+		"fgDiffChange",
+		"fgDiffDelete",
+		"fgEndOfBuffer"
+	})
+
+	settings.bgVars = exclude(bgVars, {
+		"bgDiagnosticError",
+		"bgDiagnosticHint",
+		"bgDiagnosticInfo",
+		"bgDiagnosticOk",
+		"bgDiagnosticWarn",
+		"bgDiffAdd",
+		"bgDiffChange",
+		"bgDiffDelete",
+		"bgEndOfBuffer",
+	})
+
 	settings.fgVarsThatShouldBeBright = exclude(fgVars, { "fgLineNr", "fgStatusLine" })
+
+	settings.allVars = concat(settings.fgVars, settings.bgVars)
+
+	for scope, scopeString in pairs(SPECIAL_SCOPES) do
+		table.insert(settings.allVars, scopeString)
+	end
 end
 
 
@@ -1093,7 +1132,7 @@ function logInColumns(arr)
 	local screenWidth = vim.api.nvim_get_option_value("columns", {})
 	local COLUMN_WIDTH = getMaxWidth(arr) + 2
 	local numColumns = math.floor(screenWidth / COLUMN_WIDTH)
-	for index, varName in ipairs(settings.allVars) do
+	for index, varName in ipairs(arr) do
 		s = s .. padToWidth(varName, COLUMN_WIDTH)
 		if index > 0 and index % numColumns == 0 then
 			s = s .. "\n"
@@ -1110,12 +1149,6 @@ end
 function getTemplateVars()
 	local templateVars = extractVariables(colorSchemeTemplate)
 	local groupedTemplateVars = groupByPrefix(templateVars)
-
-	settings.allVars = templateVars
-	table.sort(settings.allVars)
-	for scope, scopeString in pairs(SPECIAL_SCOPES) do
-		table.insert(settings.allVars, scopeString)
-	end
 
 	local fgVars
 	local bgVars
@@ -1553,11 +1586,6 @@ function applyConstraintsToRules()
 		settings.rulesMap.bgPmenu = makeHsl(settings.rulesMap.fgPmenu.h, 0, 0)
 		settings.rulesMap.fgPmenuSel = makeHsl(settings.rulesMap.fgPmenuSel.h, 60, 75)
 		settings.rulesMap.bgPmenuSel = makeHsl(settings.rulesMap.fgPmenuSel.h, 20, 20)
-
-		settings.rulesMap.fgPmenuKind = makeHsl(20, 30, 50)
-		settings.rulesMap.bgPmenuKind = makeHsl(20, 30, 0)
-		settings.rulesMap.fgPmenuKindSel = makeHsl(20, 30, 75)
-		settings.rulesMap.bgPmenuKindSel = makeHsl(20, 30, 20)
 	end
 
 	if settings.shouldForceUniformBrightness then
