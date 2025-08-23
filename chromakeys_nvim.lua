@@ -292,7 +292,6 @@ hi! link @variable.parameter.builtin Special
 hi! link Boolean Constant
 hi! link Character Constant
 hi! link Conditional Statement
-hi! link CurSearch Search
 hi! link CursorLineFold FoldColumn
 hi! link CursorLineSign SignColumn
 hi! link Debug Special
@@ -365,6 +364,7 @@ hi TypeDef         guifg={{fgTypeDef}} guibg={{bgTypeDef}} gui=NONE cterm=NONE
 hi Title           guifg={{fgTitle}} guibg={{bgTitle}} gui=NONE cterm=NONE
 hi Underlined      guifg={{fgUnderlined}} guibg={{bgUnderlined}} gui=NONE cterm=NONE
 hi Search          guifg={{fgSearch}} guibg={{bgSearch}} gui=NONE cterm=NONE
+hi CurSearch       guifg={{fgCurSearch}} guibg={{bgCurSearch}} gui=NONE cterm=NONE
 hi FoldColumn      guifg={{fgFoldColumn}} guibg={{bgFoldColumn}} gui=NONE cterm=NONE
 hi SignColumn      guifg={{fgSignColumn}} guibg={{bgSignColumn}} gui=NONE cterm=NONE
 hi DiagnosticError guifg={{fgDiagnosticError}} guibg={{bgDiagnosticError}} gui=NONE cterm=NONE
@@ -382,6 +382,9 @@ hi Pmenu           guifg={{fgPmenu}} guibg={{bgPmenu}} gui=NONE cterm=NONE
 hi PmenuSel        guifg={{fgPmenuSel}} guibg={{bgPmenuSel}} gui=NONE cterm=NONE
 hi Visual          guifg={{fgVisual}} guibg={{bgVisual}} gui=NONE cterm=NONE
 hi WinBar          guifg={{fgWinBar}} guibg={{bgWinBar}} gui=NONE cterm=NONE
+hi DiffAdd         guifg={{fgDiffAdd}} guibg={{bgDiffAdd}} gui=NONE cterm=NONE
+hi DiffDelete      guifg={{fgDiffDelete}} guibg={{bgDiffDelete}} gui=NONE cterm=NONE
+hi DiffChange      guifg={{fgDiffChange}} guibg={{bgDiffChange}} gui=NONE cterm=NONE
 ]]
 
 
@@ -1506,8 +1509,8 @@ function applyConstraintsToRules()
 	local bg = settings.rulesMap.bgNormal
 
 	if settings.shouldRecalculateDerivedColors then
-		settings.rulesMap.fgComment = clampLightness(settings.rulesMap.fgComment, 50, 75)
-		settings.rulesMap.bgComment = forceLightness(settings.rulesMap.fgComment, 15)
+		settings.rulesMap.fgComment = makeHsl(settings.rulesMap.fgComment.h, 65, 75)
+		settings.rulesMap.bgComment = makeHsl(settings.rulesMap.fgComment.h, 65, 15)
 		settings.rulesMap.fgStatusLine = clampSaturation(forceLightness(fg, 45), 0, 35)
 		settings.rulesMap.fgNormal = clampSaturation(forceLightness(fg, 45), 0, 35)
 		settings.rulesMap.bgStatusLine = clampSaturation(forceLightness(fg, 4), 0, 35)
@@ -1520,6 +1523,18 @@ function applyConstraintsToRules()
 		settings.rulesMap.fgEndOfBuffer = makeHsl(0, 0, 0)
 		settings.rulesMap.bgEndOfBuffer = makeHsl(0, 0, 0)
 
+		settings.rulesMap.fgCurSearch = makeHsl(0, 0, 75)
+		settings.rulesMap.bgCurSearch = makeHsl(0, 0, 0)
+		settings.rulesMap.fgSearch = makeHsl(45, 60, 50)
+		settings.rulesMap.bgSearch = makeHsl(45, 60, 30)
+
+		settings.rulesMap.fgDiffAdd = makeHsl(150, 50, 50)
+		settings.rulesMap.bgDiffAdd = makeHsl(150, 20, 20)
+		settings.rulesMap.fgDiffDelete = makeHsl(0, 50, 50)
+		settings.rulesMap.bgDiffDelete = makeHsl(0, 20, 20)
+		settings.rulesMap.fgDiffChange = makeHsl(220, 50, 60)
+		settings.rulesMap.bgDiffChange = makeHsl(220, 20, 30)
+
 		settings.rulesMap.fgDiagnosticError = makeHsl(0, 50, 50)
 		settings.rulesMap.bgDiagnosticError = makeHsl(0, 20, 20)
 		settings.rulesMap.fgDiagnosticWarn = makeHsl(30, 50, 50)
@@ -1531,8 +1546,8 @@ function applyConstraintsToRules()
 		settings.rulesMap.fgDiagnosticHint = makeHsl(30, 50, 50)
 		settings.rulesMap.bgDiagnosticHint = makeHsl(30, 20, 20)
 
-		settings.rulesMap.fgVisual = makeHsl(settings.rulesMap.fgVisual.h, 50, 50)
-		settings.rulesMap.bgVisual = makeHsl(settings.rulesMap.bgVisual.h, 50, 20)
+		settings.rulesMap.fgVisual = makeHsl(settings.rulesMap.fgVisual.h, 80, 70)
+		settings.rulesMap.bgVisual = makeHsl(settings.rulesMap.fgVisual.h, 80, 35)
 
 		settings.rulesMap.fgPmenu = makeHsl(settings.rulesMap.fgPmenu.h, 20, 50)
 		settings.rulesMap.bgPmenu = makeHsl(settings.rulesMap.fgPmenu.h, 0, 0)
