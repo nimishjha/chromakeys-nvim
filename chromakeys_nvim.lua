@@ -19,12 +19,13 @@ local settings = {
 		l = 50
 	},
 	scopes = {},
+	baseScope = "fgIdentifier",
 	colorFunctions = {},
 	uniformBrightness = 70,
 	minFgBrightness = 35,
 	maxFgBrightness = 75,
 	maxBgBrightness = 15,
-	backgroundLightness = 7,
+	backgroundLightness = 8,
 	backgroundSaturation = 50,
 	commentBgLightness = 15,
 	shouldForceUniformBrightness = false,
@@ -59,6 +60,7 @@ local settings = {
 		CyanOrange         = { 180, 190, 40 },
 		VioletBlue         = { 250, 260, 220 },
 		VioletGreen        = { 250, 260, 160 },
+		VioletGreen2       = { 250, 260, 150 },
 		VioletCyan         = { 250, 260, 190 },
 		VioletYellow       = { 250, 260, 60 },
 		VioletOrange       = { 250, 260, 30 },
@@ -374,6 +376,7 @@ hi EndOfBuffer     guifg={{fgEndOfBuffer}} guibg={{bgEndOfBuffer}} gui=NONE cter
 hi NonText         guifg={{fgNonText}} guibg={{bgNonText}} gui=NONE cterm=NONE
 hi Normal          guifg={{fgNormal}} guibg={{bgNormal}} gui=NONE cterm=NONE
 hi LineNr          guifg={{fgLineNr}} guibg={{bgLineNr}} gui=NONE cterm=NONE
+hi CursorLineNr    guifg={{fgCursorLineNr}} guibg={{bgCursorLineNr}} gui=NONE cterm=NONE
 hi StatusLine      guifg={{fgStatusLine}} guibg={{bgStatusLine}} gui=NONE cterm=NONE
 hi Pmenu           guifg={{fgPmenu}} guibg={{bgPmenu}} gui=NONE cterm=NONE
 hi PmenuSel        guifg={{fgPmenuSel}} guibg={{bgPmenuSel}} gui=NONE cterm=NONE
@@ -564,6 +567,22 @@ function getTableLength(tableInstance)
 	return count
 end
 
+function exclude(list, excludeList)
+	local excludeLookup = {}
+	for _, str in ipairs(excludeList) do
+		excludeLookup[str] = true
+	end
+
+	local filteredList = {}
+	for _, str in ipairs(list) do
+		if excludeLookup[str] == nil then
+			table.insert(filteredList, str)
+		end
+	end
+
+	return filteredList
+end
+
 function setTemplateVariables()
 	local fgVars, bgVars = getTemplateVars()
 
@@ -572,6 +591,7 @@ function setTemplateVariables()
 
 	settings.fgVars = fgVars
 	settings.bgVars = bgVars
+	settings.fgVarsThatShouldBeBright = exclude(fgVars, { "fgLineNr", "fgStatusLine" })
 end
 
 
@@ -989,7 +1009,7 @@ function saveTheme()
 		return
 	end
 
-	local baseColorName = getBaseColorName(settings.rulesMap.fgNormal)
+	local baseColorName = getBaseColorName(settings.rulesMap[settings.baseScope])
 	local prefix = settings.colorSchemePrefix .. baseColorName
 
 	local maxNum = 0
@@ -1236,9 +1256,9 @@ end
 
 function setScopeColor(scope, hsl)
 	settings.rulesMap[scope] = hsl
-	if scope == "fgNormal" then
-		deriveBgNormalFromFgNormal()
-		settings.base.h = settings.rulesMap.fgNormal.h
+	if scope == settings.baseScope then
+		deriveBgNormal()
+		settings.base.h = settings.rulesMap[settings.baseScope].h
 	elseif scope == "fgComment" then
 		deriveBgCommentFromFgComment()
 	elseif scope == "bgNormal" or scope == SPECIAL_SCOPES.ALL or scope == SPECIAL_SCOPES.ALL_EXCEPT_FGNORMAL or scope == SPECIAL_SCOPES.ALL_EXCEPT_FGNORMAL_AS_ONE then
@@ -1308,8 +1328,8 @@ end
 
 
 
-function deriveBgNormalFromFgNormal()
-	setScopeColor("bgNormal", makeHsl(settings.rulesMap.fgNormal.h, settings.backgroundSaturation, settings.backgroundLightness))
+function deriveBgNormal()
+	setScopeColor("bgNormal", makeHsl(settings.rulesMap[settings.baseScope].h, settings.backgroundSaturation, settings.backgroundLightness))
 end
 
 function deriveBgCommentFromFgComment()
@@ -1320,7 +1340,7 @@ function createRules()
 	for i, varName in ipairs(settings.fgVars) do
 		setScopeColor(varName, settings.fgColors[i])
 	end
-	local bgHue = settings.rulesMap.fgNormal.h
+	local bgHue = settings.rulesMap[settings.baseScope].h
 	for i, varName in ipairs(settings.bgVars) do
 		setScopeColor(varName, makeHsl(bgHue, settings.backgroundSaturation, settings.backgroundLightness))
 	end
@@ -1482,17 +1502,20 @@ function applyConstraintsToRules()
 
 	ensureFgBgLightness()
 
-	local fg = settings.rulesMap.fgNormal
+	local fg = settings.rulesMap[settings.baseScope]
 	local bg = settings.rulesMap.bgNormal
 
 	if settings.shouldRecalculateDerivedColors then
 		settings.rulesMap.fgComment = clampLightness(settings.rulesMap.fgComment, 50, 75)
 		settings.rulesMap.bgComment = forceLightness(settings.rulesMap.fgComment, 15)
 		settings.rulesMap.fgStatusLine = clampSaturation(forceLightness(fg, 45), 0, 35)
+		settings.rulesMap.fgNormal = clampSaturation(forceLightness(fg, 45), 0, 35)
 		settings.rulesMap.bgStatusLine = clampSaturation(forceLightness(fg, 4), 0, 35)
 		settings.rulesMap.bgStatusLine.l = math.min(settings.rulesMap.bgStatusLine.l, bg.l)
-		settings.rulesMap.fgLineNr = clampSaturation(forceLightness(fg, 40), 0, 35)
-		settings.rulesMap.fgCursorLineNr = clampSaturation(forceLightness(fg, 65), 0, 35)
+		settings.rulesMap.fgLineNr = makeHsl(fg.h, 30, 35)
+		settings.rulesMap.fgCursorLineNr = makeHsl(fg.h, 50, 60)
+		settings.rulesMap.bgLineNr = settings.rulesMap.bgStatusLine
+		settings.rulesMap.bgCursorLineNr = settings.rulesMap.bgStatusLine
 
 		settings.rulesMap.fgEndOfBuffer = makeHsl(0, 0, 0)
 		settings.rulesMap.bgEndOfBuffer = makeHsl(0, 0, 0)
@@ -1523,7 +1546,7 @@ function applyConstraintsToRules()
 	end
 
 	if settings.shouldForceUniformBrightness then
-		for _, varName in ipairs(settings.fgVars) do
+		for _, varName in ipairs(settings.fgVarsThatShouldBeBright) do
 			settings.rulesMap[varName] = forceBrightness(settings.rulesMap[varName], settings.uniformBrightness)
 		end
 	end
